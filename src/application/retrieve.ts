@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import Hotel from "../infrastructure/schemas/Hotel";
 import mongoose from "mongoose";
-import { Collection, Document } from "mongodb";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { MongoDBAtlasVectorSearch } from "@langchain/mongodb";
 
@@ -12,8 +11,6 @@ export const retrieve = async (
 ) => {
     try {
         const { query } = req.query;
-        console.log(query);
-
         if (!query || query === "") {
             const hotels = (await Hotel.find()).map((hotel) => ({
                 hotel: hotel,
@@ -30,15 +27,15 @@ export const retrieve = async (
         });
 
         const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
-            collection: mongoose.connection.collection(
-                "hotelVectors"
-            ) as unknown as Collection<Document>,
+            collection: mongoose.connection.collection("hotelVectors"),
             indexName: "vector_index",
         });
 
         const results = await vectorIndex.similaritySearchWithScore(
             query as string
         );
+
+        console.log(results);
 
         const matchedHotels = await Promise.all(
             results.map(async (result) => {
@@ -52,7 +49,6 @@ export const retrieve = async (
 
         res.status(200).json(
             matchedHotels.length > 3 ? matchedHotels.slice(0, 4) : matchedHotels
-            // matchedHotels.filter((hotel) => hotel.confidence > 0.9)
         );
         return;
     } catch (error) {

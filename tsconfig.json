@@ -5,7 +5,7 @@
         "strict": true,
         "lib": ["esnext"],
         "esModuleInterop": true,
-        "skipLibCheck": true
+        "skipLibCheck": false
     },
     "ts-node": {
         "files": true
