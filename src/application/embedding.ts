@@ -16,11 +16,17 @@ export const createEmbeddings = async (
             apiKey: process.env.OPENAI_API_KEY,
         });
 
-        // @ts-ignore
+        const { connection } = require("mongoose");
+
         const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
-            collection: mongoose.connection.collection("hotelVectors"),
+            collection: connection.collection("hotelVectors"),
             indexName: "vector_index",
         });
+
+        // const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
+        //     collection: mongoose.connection.collection("hotelVectors"),
+        //     indexName: "vector_index",
+        // });
 
         const hotels = await Hotel.find({});
 
