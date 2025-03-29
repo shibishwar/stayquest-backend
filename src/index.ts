@@ -18,10 +18,9 @@ app.use(clerkMiddleware());
 app.use(express.json());
 
 // Enable CORS to allow requests from the origin
-// app.use(
-//     cors({ origin: "https://aidf-stayquest-frontend-shibishwar.netlify.app" })
-// );
-app.use(cors());
+app.use(
+    cors({ origin: "https://aidf-stayquest-frontend-shibishwar.netlify.app" })
+);
 
 // Connect to the database
 connectDB();
