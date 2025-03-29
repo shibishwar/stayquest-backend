@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import Hotel from "../infrastructure/schemas/Hotel";
 import mongoose from "mongoose";
+import { Collection, Document } from "mongodb";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { MongoDBAtlasVectorSearch } from "@langchain/mongodb";
 
@@ -29,7 +30,9 @@ export const retrieve = async (
         });
 
         const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
-            collection: mongoose.connection.collection("hotelVectors"),
+            collection: mongoose.connection.collection(
+                "hotelVectors"
+            ) as unknown as Collection<Document>,
             indexName: "vector_index",
         });
 
