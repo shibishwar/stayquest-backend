@@ -26,6 +26,7 @@ export const retrieve = async (
             apiKey: process.env.OPENAI_API_KEY,
         });
 
+        // @ts-ignore
         const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
             collection: mongoose.connection.collection("hotelVectors"),
             indexName: "vector_index",
