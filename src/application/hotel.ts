@@ -18,7 +18,10 @@ export const getAllHotels = async (
         let query: any = {};
 
         // Filter by location
-        if (location) query.$text = { $search: location };
+        // if (location) query.$text = { $search: location };
+        if (typeof location === "string") {
+            query.location = { $regex: new RegExp(location, "i") };
+        }
 
         // Filter by price
         if (minPrice || maxPrice) {
