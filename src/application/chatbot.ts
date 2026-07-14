@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
-import mongoose from 'mongoose';
-import OpenAI from 'openai';
-import { OpenAIEmbeddings } from '@langchain/openai';
 import { MongoDBAtlasVectorSearch } from "@langchain/mongodb";
 import Hotel from "../infrastructure/schemas/Hotel";
 import ValidationError from "../domain/errors/validation-error";
+import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
+import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { getVectorCollection } from '../infrastructure/vector-collection';
 
 type ChatRole = 'user' | 'assistant';
 
@@ -15,8 +15,11 @@ type ChatHistoryItem = {
     content: string;
 };
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+const model = new ChatGoogleGenerativeAI({
+    model: "gemini-3.1-flash-lite",
+    apiKey: process.env.GEMINI_API_KEY,
+    temperature: 0.3,
+    convertSystemMessageToHumanContent: true,
 });
 
 const chatbotPromptPath = path.join(
@@ -62,15 +65,15 @@ export const chatbotResponse = async (
             throw new ValidationError("Message is required");
         }
 
-        const embeddingsModel = new OpenAIEmbeddings({
-            model: "text-embedding-3-large",
-            openAIApiKey: process.env.OPENAI_API_KEY,
+        const embeddingsModel = new GoogleGenerativeAIEmbeddings({
+            model: "gemini-embedding-001",
+            apiKey: process.env.GEMINI_API_KEY
         });
 
-        const { connection } = require("mongoose");
+        const nativeCollection = await getVectorCollection();
 
         const vectorStore = new MongoDBAtlasVectorSearch(embeddingsModel, {
-            collection: connection.collection("hotelVectors"),
+            collection: nativeCollection,
             indexName: "vector_index",
         });
 
@@ -108,31 +111,39 @@ Amenities: ${hotel.amenities?.join(", ")}
 
         const safeHistory = sanitizeHistory(history);
 
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                {
-                    role: "system",
-                    content: chatbotSystemPrompt,
-                },
-                ...safeHistory,
-                {
-                    role: "user",
-                    content: `
+        const geminiMessages = [
+            new SystemMessage(chatbotSystemPrompt),
+            ...safeHistory.map((item) =>
+                item.role === "assistant"
+                    ? new AIMessage(item.content)
+                    : new HumanMessage(item.content)
+            ),
+            new HumanMessage(`
 Hotel context:
 ${hotelContext || "No matching hotels found."}
 
 Current user message:
 ${message}
-                    `.trim(),
-                },
-            ],
-        });
+            `.trim()),
+        ];
+
+        const completion = await model.invoke(geminiMessages);
+        const content = Array.isArray(completion.content)
+            ? completion.content
+                  .map((item) => {
+                      if (typeof item === "string") {
+                          return item;
+                      }
+
+                      return "text" in item ? item.text : "";
+                  })
+                  .join("")
+            : completion.content;
 
         res.status(200).json({
             message: {
                 role: "assistant",
-                content: completion.choices[0].message.content,
+                content,
             },
             matchedHotels,
         });

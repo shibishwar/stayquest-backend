@@ -30,15 +30,16 @@ const globalErrorHandlingMiddleware = (
         return;
     }
 
-    const isOpenAIError =
+    const isProviderError =
         error && typeof error === "object" &&
         ("status" in error || "code" in error || "type" in error);
 
-    if (isOpenAIError) {
-        const message = error.message || "OpenAI request failed. Please try again later.";
+    if (isProviderError) {
+        const code = typeof error.code === "string" ? error.code : "";
+        const message = error.message || "AI provider request failed. Please try again later.";
         const statusCode = error.status
             ? Number(error.status)
-            : error.code === "insufficient_quota" || error.code?.includes("rate_limit")
+            : code === "insufficient_quota" || code.includes("rate_limit")
             ? 429
             : 502;
 

@@ -4,6 +4,8 @@ import Hotel from "../infrastructure/schemas/Hotel";
 import mongoose from "mongoose";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { MongoDBAtlasVectorSearch } from "@langchain/mongodb";
+import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
+import { getVectorCollection } from "../infrastructure/vector-collection";
 
 export const retrieve = async (
     req: Request,
@@ -22,27 +24,17 @@ export const retrieve = async (
             return;
         }
 
-        const embeddingsModel = new OpenAIEmbeddings({
-            model: "text-embedding-ada-002",
-            apiKey: process.env.OPENAI_API_KEY,
+        const embeddingsModel = new GoogleGenerativeAIEmbeddings({
+            model: "gemini-embedding-001",
+            apiKey: process.env.GEMINI_API_KEY
         });
 
-        const { connection } = require("mongoose");
+        const nativeCollection = await getVectorCollection();
 
         const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
-            collection: connection.collection("hotelVectors"),
+            collection: nativeCollection,
             indexName: "vector_index",
         });
-
-        // const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
-        //     collection: mongoose.connection.collection("hotelVectors"),
-        //     indexName: "vector_index",
-        // });
-
-        // const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
-        //     collection: mongoose.connection.collection("hotelVectors"),
-        //     indexName: "vector_index",
-        // });
 
         const results = await vectorIndex.similaritySearchWithScore(
             query as string

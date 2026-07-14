@@ -3,7 +3,8 @@ import Hotel from "../infrastructure/schemas/Hotel";
 import { CreateHotelDTO } from "../domain/dtos/hotel";
 import NotFoundError from "../domain/errors/not-found-error";
 import ValidationError from "../domain/errors/validation-error";
-import OpenAI from "openai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { HumanMessage } from "@langchain/core/messages";
 
 // const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -79,20 +80,19 @@ export const generateResponse = async (
             throw new ValidationError("Prompt is required");
         }
 
-        const openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
+        const model = new ChatGoogleGenerativeAI({
+            model: "gemini-3.1-flash-lite",
+            apiKey: process.env.GEMINI_API_KEY,
         });
 
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [{ role: "user", content: prompt }],
-            store: true,
-        });
-
-        const content = completion.choices?.[0]?.message?.content;
+        const response = await model.invoke([new HumanMessage(prompt)]);
+        const content =
+            typeof response.content === "string"
+                ? response.content
+                : JSON.stringify(response.content);
 
         if (!content) {
-            throw new Error("OpenAI did not return a completion response.");
+            throw new Error("Gemini did not return a completion response.");
         }
 
         res.status(200).json({

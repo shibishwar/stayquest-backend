@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { OpenAIEmbeddings } from "@langchain/openai";
+import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { Document } from "@langchain/core/documents";
 import { MongoDBAtlasVectorSearch } from "@langchain/mongodb";
-import mongoose from "mongoose";
 import Hotel from "../infrastructure/schemas/Hotel";
+import { getVectorCollection } from "../infrastructure/vector-collection";
 
 export const createEmbeddings = async (
     req: Request,
@@ -11,35 +11,20 @@ export const createEmbeddings = async (
     next: NextFunction
 ) => {
     try {
-        const embeddingsModel = new OpenAIEmbeddings({
-            model: "text-embedding-ada-002",
-            apiKey: process.env.OPENAI_API_KEY,
+        const embeddingsModel = new GoogleGenerativeAIEmbeddings({
+            model: "gemini-embedding-001",
+            apiKey: process.env.GEMINI_API_KEY,
         });
 
-        const { connection } = require("mongoose");
+        const nativeCollection = await getVectorCollection();
+        await nativeCollection.deleteMany({});
 
         const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
-            collection: connection.collection("hotelVectors"),
+            collection: nativeCollection,
             indexName: "vector_index",
         });
 
-        // const vectorIndex = new MongoDBAtlasVectorSearch(embeddingsModel, {
-        //     collection: mongoose.connection.collection("hotelVectors"),
-        //     indexName: "vector_index",
-        // });
-
         const hotels = await Hotel.find({});
-
-        // const docs = hotels.map((hotel) => {
-        //     const { _id, location, price, description } = hotel;
-        //     const doc = new Document({
-        //         pageContent: `${description} Located in ${location}. Price per night: ${price}`,
-        //         metadata: {
-        //             _id,
-        //         },
-        //     });
-        //     return doc;
-        // });
 
         const docs = hotels.map((hotel) => {
             const {
