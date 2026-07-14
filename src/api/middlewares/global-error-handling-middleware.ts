@@ -2,39 +2,50 @@ import { Request, Response, NextFunction } from "express";
 
 // Global error handling middleware function
 const globalErrorHandlingMiddleware = (
-    error: Error, // The error thrown in the application
+    error: any, // The error thrown in the application
     req: Request, // Incoming HTTP request
     res: Response, // HTTP response object
     next: NextFunction // Function to pass control to the next middleware
 ) => {
     // Log the error for debugging purposes
-    console.log(error);
+    console.error(error);
 
-    // Handle NotFoundError - typically used when a requested resource is not found
-    if (error.name === "NotFoundError") {
+    if (error?.name === "NotFoundError") {
         res.status(404).json({ message: error.message });
         return;
     }
 
-    // Handle ValidationError - used when request input fails validation rules
-    if (error.name === "ValidationError") {
+    if (error?.name === "ValidationError") {
         res.status(400).json({ message: error.message });
         return;
     }
 
-    // Handle UnauthorizedError - used when authentication fails or token is missing/invalid
-    if (error.name === "UnauthorizedError") {
+    if (error?.name === "UnauthorizedError") {
         res.status(401).json({ message: error.message });
         return;
     }
 
-    // Handle ForbiddenError - used when the user does not have permission to access the resource
-    if (error.name === "ForbiddenError") {
+    if (error?.name === "ForbiddenError") {
         res.status(403).json({ message: error.message });
         return;
     }
 
-    // Catch-all for any other unhandled errors
+    const isOpenAIError =
+        error && typeof error === "object" &&
+        ("status" in error || "code" in error || "type" in error);
+
+    if (isOpenAIError) {
+        const message = error.message || "OpenAI request failed. Please try again later.";
+        const statusCode = error.status
+            ? Number(error.status)
+            : error.code === "insufficient_quota" || error.code?.includes("rate_limit")
+            ? 429
+            : 502;
+
+        res.status(statusCode).json({ message });
+        return;
+    }
+
     res.status(500).json({ message: "Internal Server Error" });
 };
 

@@ -72,25 +72,39 @@ export const generateResponse = async (
     res: Response,
     next: NextFunction
 ) => {
-    const { prompt } = req.body;
+    try {
+        const { prompt } = req.body;
 
-    const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
+        if (!prompt || typeof prompt !== "string") {
+            throw new ValidationError("Prompt is required");
+        }
 
-    const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        store: true,
-    });
+        const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+        });
 
-    res.status(200).json({
-        message: {
-            role: "assistant",
-            content: completion.choices[0].message.content,
-        },
-    });
-    return;
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [{ role: "user", content: prompt }],
+            store: true,
+        });
+
+        const content = completion.choices?.[0]?.message?.content;
+
+        if (!content) {
+            throw new Error("OpenAI did not return a completion response.");
+        }
+
+        res.status(200).json({
+            message: {
+                role: "assistant",
+                content,
+            },
+        });
+        return;
+    } catch (error) {
+        next(error);
+    }
 };
 
 export const createHotel = async (

@@ -38,5 +38,14 @@ app.use(globalErrorHandlingMiddleware);
 // Define the port number
 const PORT = process.env.PORT || 8000;
 
+// Handle unexpected runtime errors and avoid crashing on unhandled promise rejections
+process.on("unhandledRejection", (reason) => {
+    console.error("Unhandled Rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+    console.error("Uncaught Exception:", error);
+});
+
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
