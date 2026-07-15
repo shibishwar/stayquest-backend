@@ -49,7 +49,7 @@ const sanitizeHistory = (history: unknown): ChatHistoryItem[] => {
         .slice(-10)
         .map((item) => ({
             role: item.role,
-            content: item.content.slice(0, 1000), 
+            content: item.content.slice(0, 1000),
         }));
 };
 
@@ -58,7 +58,7 @@ export const chatbotResponse = async (
     res: Response,
     next: NextFunction
 ) => {
-    try{
+    try {
         const { message, history } = req.body;
 
         if (!message || typeof message !== "string") {
@@ -84,7 +84,7 @@ export const chatbotResponse = async (
                 const hotel = await Hotel.findById(doc.metadata._id);
 
                 return {
-                    hotel, 
+                    hotel,
                     confidence: score,
                     content: doc.pageContent,
                 };
@@ -130,14 +130,14 @@ ${message}
         const completion = await model.invoke(geminiMessages);
         const content = Array.isArray(completion.content)
             ? completion.content
-                  .map((item) => {
-                      if (typeof item === "string") {
-                          return item;
-                      }
+                .map((item) => {
+                    if (typeof item === "string") {
+                        return item;
+                    }
 
-                      return "text" in item ? item.text : "";
-                  })
-                  .join("")
+                    return "text" in item ? item.text : "";
+                })
+                .join("")
             : completion.content;
 
         res.status(200).json({
@@ -145,7 +145,6 @@ ${message}
                 role: "assistant",
                 content,
             },
-            matchedHotels,
         });
     } catch (error) {
         next(error);
