@@ -5,6 +5,11 @@ import NotFoundError from "../domain/errors/not-found-error";
 import ValidationError from "../domain/errors/validation-error";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage } from "@langchain/core/messages";
+import {
+    syncAddEmbedding,
+    syncUpdateEmbedding,
+    syncDeleteEmbedding,
+} from "./sync-embedding";
 
 // const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -119,7 +124,7 @@ export const createHotel = async (
             throw new ValidationError(hotel.error.message);
         }
 
-        await Hotel.create({
+        const newHotel = await Hotel.create({
             name: hotel.data.name,
             location: hotel.data.location,
             image: hotel.data.image,
@@ -129,6 +134,8 @@ export const createHotel = async (
         });
 
         res.status(201).json({ message: "Hotel created successfully" });
+
+        syncAddEmbedding(newHotel);
     } catch (error) {
         next(error);
     }
@@ -148,6 +155,8 @@ export const deleteHotel = async (
         }
 
         res.status(200).json({ message: "Hotel deleted successfully", hotel });
+
+        syncDeleteEmbedding(hotelId);
         return;
     } catch (error) {
         next(error);
@@ -181,6 +190,10 @@ export const updateHotel = async (
             message: "Hotel updated successfully",
             hotel: updated,
         });
+
+        if (updated) {
+            syncUpdateEmbedding(hotelId, updated);
+        }
         return;
     } catch (error) {
         next(error);
