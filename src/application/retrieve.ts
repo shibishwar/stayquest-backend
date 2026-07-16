@@ -40,8 +40,6 @@ export const retrieve = async (
             query as string
         );
 
-        console.log(results);
-
         const matchedHotels = await Promise.all(
             results.map(async (result) => {
                 const hotel = await Hotel.findById(result[0].metadata._id);
