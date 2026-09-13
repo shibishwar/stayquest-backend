@@ -22,13 +22,23 @@ const model = new ChatGoogleGenerativeAI({
     convertSystemMessageToHumanContent: true,
 });
 
-const chatbotPromptPath = path.join(
-    __dirname,
-    "prompts",
-    "chatbot.md"
-);
+const resolvePromptPath = () => {
+    const candidates = [
+        path.join(__dirname, "prompts", "chatbot.md"),
+        path.join(process.cwd(), "src", "application", "prompts", "chatbot.md"),
+        path.join(process.cwd(), "dist", "application", "prompts", "chatbot.md"),
+    ];
 
-const chatbotSystemPrompt = fs.readFileSync(chatbotPromptPath, "utf-8");
+    const found = candidates.find((candidate) => fs.existsSync(candidate));
+
+    if (!found) {
+        throw new Error("Chatbot prompt file not found at expected locations");
+    }
+
+    return found;
+};
+
+const chatbotSystemPrompt = fs.readFileSync(resolvePromptPath(), "utf-8");
 
 const sanitizeHistory = (history: unknown): ChatHistoryItem[] => {
     if (!Array.isArray(history)) {

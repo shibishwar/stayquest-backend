@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "scripts": {
         "dev": "nodemon src/index.ts",
-        "build": "npm install && tsc",
+        "build": "npm install && tsc && node scripts/copy-assets.js",
         "start": "node ./dist/index.js"
     },
     "author": "",
