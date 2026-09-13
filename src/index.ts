@@ -7,6 +7,8 @@ import notFoundMiddleware from "./api/middlewares/notfound-middleware";
 import cors from "cors";
 import bookingsRouter from "./api/booking";
 import hotelsRouter from "./api/hotel";
+import { apiReference } from "@scalar/express-api-reference";
+import openApiSpec from "./docs/openapi";
 
 // Create an instance of Express application
 const app = express();
@@ -28,6 +30,21 @@ connectDB();
 // Define routes for hotels and bookings
 app.use("/api/hotels", hotelsRouter);
 app.use("/api/bookings", bookingsRouter);
+
+// Serve raw OpenAPI JSON spec
+app.get("/api-docs/openapi.json", (_req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.json(openApiSpec);
+});
+
+// Serve Scalar interactive API reference UI
+app.use(
+    "/api-docs",
+    apiReference({
+        spec: { url: "/api-docs/openapi.json" },
+        theme: "deepSpace",
+    })
+);
 
 // Middleware to handle all unmatched routes
 app.use(notFoundMiddleware);
