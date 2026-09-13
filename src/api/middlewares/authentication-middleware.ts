@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import UnauthorizedError from "../../domain/errors/unauthorized-error";
+import type { SignedInAuthObject } from "@clerk/backend/internal";
 
 /**
  * Middleware to check if the user is authenticated.
@@ -12,7 +13,7 @@ export const isAuthenticated = (
 ) => {
     // Check if req.auth and req.auth.userId exist.
     // If not, the user is considered unauthenticated.
-    if (!req?.auth.userId) {
+    if (!(req?.auth() as SignedInAuthObject).userId) {
         // Throw a custom UnauthorizedError to indicate the user is not authenticated.
         throw new UnauthorizedError("Unauthenticated");
     }

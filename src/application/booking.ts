@@ -5,6 +5,7 @@ import { CreateBookingDTO } from "../domain/dtos/booking";
 import ValidationError from "../domain/errors/validation-error";
 import NotFoundError from "../domain/errors/not-found-error";
 import { clerkClient } from "@clerk/express";
+import type { SignedInAuthObject } from "@clerk/backend/internal";
 
 export const createBooking = async (
     req: Request,
@@ -18,7 +19,7 @@ export const createBooking = async (
             throw new ValidationError(booking.error.message);
         }
 
-        const user = req.auth;
+        const user = req.auth() as SignedInAuthObject;
 
         // Check if the check-in date is before the check-out date
         const checkInDate = new Date(booking.data.checkIn);
@@ -106,13 +107,13 @@ export const getUserBookings = async (
     next: NextFunction
 ) => {
     try {
-        const user = req.auth;
-
+        const user = req.auth() as SignedInAuthObject;
         const bookings = await Booking.find({ userId: user.userId }).populate(
             "hotelId"
         );
 
         res.status(200).json(bookings);
+        return;
     } catch (error) {
         next(error);
     }
@@ -124,8 +125,7 @@ export const deleteBooking = async (
     next: NextFunction
 ) => {
     try {
-        const user = req.auth;
-
+        const user = req.auth() as SignedInAuthObject;
         const { bookingId } = req.params;
 
         const booking = await Booking.findById(bookingId);
@@ -143,6 +143,7 @@ export const deleteBooking = async (
             message: "Booking deleted successfully",
             booking,
         });
+        return;
     } catch (error) {
         next(error);
     }

@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import ForbiddenError from "../../domain/errors/forbidden-error"; // Custom error class for handling forbidden access
 import { clerkClient } from "@clerk/express"; // Clerk SDK client to interact with user data
+import type { SignedInAuthObject } from "@clerk/backend/internal";
 
 // Middleware to check if the authenticated user has admin privileges
 export const isAdmin = async (
@@ -10,7 +11,7 @@ export const isAdmin = async (
 ) => {
     try {
         // Extract the user ID from Clerk's session claims
-        const userId = req.auth?.sessionClaims?.sub;
+        const userId = (req.auth() as SignedInAuthObject)?.sessionClaims?.sub;
 
         // If user ID is not present, authentication is required
         if (!userId) {
