@@ -86,7 +86,7 @@ export const generateResponse = async (
         }
 
         const model = new ChatGoogleGenerativeAI({
-            model: "gemini-3.1-flash-lite",
+            model: process.env.GEMINI_CHAT_MODEL ?? "gemini-3.1-flash-lite",
             apiKey: process.env.GEMINI_API_KEY,
         });
 

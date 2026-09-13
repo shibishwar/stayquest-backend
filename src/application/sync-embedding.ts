@@ -5,7 +5,7 @@ import { getVectorCollection } from "../infrastructure/vector-collection";
 
 const getVectorStore = async () => {
     const embeddingsModel = new GoogleGenerativeAIEmbeddings({
-        model: "gemini-embedding-001",
+        model: process.env.GEMINI_EMBEDDING_MODEL ?? "gemini-embedding-001",
         apiKey: process.env.GEMINI_API_KEY,
     });
 

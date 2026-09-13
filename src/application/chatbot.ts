@@ -16,7 +16,7 @@ type ChatHistoryItem = {
 };
 
 const model = new ChatGoogleGenerativeAI({
-    model: "gemini-3.1-flash-lite",
+    model: process.env.GEMINI_CHAT_MODEL ?? "gemini-3.1-flash-lite",
     apiKey: process.env.GEMINI_API_KEY,
     temperature: 0.3,
     convertSystemMessageToHumanContent: true,
@@ -66,7 +66,7 @@ export const chatbotResponse = async (
         }
 
         const embeddingsModel = new GoogleGenerativeAIEmbeddings({
-            model: "gemini-embedding-001",
+            model: process.env.GEMINI_EMBEDDING_MODEL ?? "gemini-embedding-001",
             apiKey: process.env.GEMINI_API_KEY
         });
 
